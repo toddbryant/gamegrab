@@ -36,7 +36,11 @@ def main(arguments):
             for game in games.json()['games']:
                 if game['rules'] == 'chess' and (not blitz_only or game['time_class'] == 'blitz'):
                     pgn = game['pgn'].replace('\\n', '\n')
-                    f.write(game['pgn'])
+                    try:
+                        f.write(game['pgn'])
+                    except UnicodeEncodeError: # hack
+                        print('UnicodeEncodeError, skipping month.')
+                        continue
 
                     if show_eco_stats:
                         try: 
