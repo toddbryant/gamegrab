@@ -31,7 +31,7 @@ def tenths_sec_to_str(time_tenths):
        return f'{sec} sec'
 
 def is_user_white(game, username):
-    return game.headers["White"] == username
+    return game.headers["White"].lower() == username.lower()
 
 def is_user_to_move(game, node, username):
     return is_user_white(game, username) != node.turn()
@@ -74,10 +74,13 @@ def find_long_thinks(game, username, threshold):
 
     return str(game) if comments else ''
 
+def was_time_scramble(game):
+    scramble_regex = r'%clk 0:00:[0-1][0-9](?:\.[0-9])?[^%]*%clk 0:00:[0-1][0-9](?:\.[0-9])?'
+    return len(re.findall(scramble_regex, str(game))) >= 5
+
 def main(arguments):
-    print(arguments)
     username = arguments['USERNAME']
-    num_games = arguments['--num_games']
+    num_games = int(arguments['--num_games'])
     threshold = int(arguments['--threshold'])
 
     pgnfile = f'{username}.pgn'
@@ -87,6 +90,11 @@ def main(arguments):
 
     no_long_think_perfs = []
     long_think_perfs = []
+
+    scramble_perfs = []
+    total_perfs = []
+
+    think_moves, total_moves = 0, 0
 
     pgn = open(pgnfile)
     with open(f'annotated_{username}.pgn', 'w') as outfile:
@@ -100,15 +108,29 @@ def main(arguments):
                 outfile.write('\n\n')
 
                 long_think_perfs.append(perf)
+
+                think_moves += str(result).count('sec')
             else:
                 no_long_think_perfs.append(perf)
+
+            total_moves += sum(1 for m in game.mainline_moves()) // 2
             
+            if was_time_scramble(game):
+                scramble_perfs.append(perf)
+            total_perfs.append(perf)
+                
             if ctr == num_games:
                 break
             ctr += 1
 
-    print(f'Games with no long thinks: {len(no_long_think_perfs)}. Avg perf: {int(sum(no_long_think_perfs) / len(no_long_think_perfs))}')
-    print(f'Games with long thinks: {len(long_think_perfs)}. Avg perf: {int(sum(long_think_perfs) / len(long_think_perfs))}')
+    slow_rate = think_moves / ctr 
+    print(f'{threshold} sec think rate: {slow_rate:.3f}/game')
+    print(f'Games with no {threshold} sec thinks: {len(no_long_think_perfs)}. Avg perf: {int(sum(no_long_think_perfs) / len(no_long_think_perfs))}')
+    print(f'Games with {threshold} sec thinks: {len(long_think_perfs)}. Avg perf: {int(sum(long_think_perfs) / len(long_think_perfs))}')
+
+    print()
+    print(f'Games reaching time scrambles: {len(scramble_perfs)}')
+    print(f'Perf in time scrambles: {int(sum(scramble_perfs) / len(scramble_perfs))} (compared to {int(sum(total_perfs) / len(total_perfs))} overall)')
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
