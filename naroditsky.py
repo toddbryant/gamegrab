@@ -130,7 +130,8 @@ def main(arguments):
 
     print()
     print(f'Games reaching time scrambles: {len(scramble_perfs)}')
-    print(f'Perf in time scrambles: {int(sum(scramble_perfs) / len(scramble_perfs))} (compared to {int(sum(total_perfs) / len(total_perfs))} overall)')
+    scramble_perf = int(sum(scramble_perfs) / len(scramble_perfs)) if len(scramble_perfs) > 0 else 'N/A'
+    print(f'Perf in time scrambles: {scramble_perf} (compared to {int(sum(total_perfs) / len(total_perfs))} overall)')
 
 if __name__ == '__main__':
     arguments = docopt(__doc__)
