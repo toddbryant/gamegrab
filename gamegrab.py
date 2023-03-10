@@ -1,11 +1,11 @@
 """gamegrab
 
 Usage:
-  gamegrab.py [--blitz-only] [--outfile=OUTFILE] [--color=COLOR] [--since=YYYYMM] [--show-eco-stats] USERNAME
+  gamegrab.py [--time-class=TC] [--outfile=OUTFILE] [--color=COLOR] [--since=YYYYMM] [--show-eco-stats] USERNAME
   gamegrab.py (-h | --help)
 
 Options:
-  --blitz-only          Only download blitz games.
+  --time-class=TC       Only download games of specified time control.
   --outfile=OUTFILE     Name of outputfile (defaults to USERNAME.pgn).
   --color=COLOR         Download games of specific color.   
   --num-games=NUMGAMES  Download only this many recent games.
@@ -23,11 +23,11 @@ import re
 
 def main(arguments):
     user = arguments['USERNAME']
-    outfile = arguments['--outfile'] or '{0}.pgn'.format(user)
-    blitz_only = arguments['--blitz-only']
-    color = arguments['--color'].lower() if arguments['--color'] else None
-    since = arguments['--since'] if arguments['--since'] else None
-    num_games = int(arguments['--num-games']) if arguments['--num-games'] else None
+    outfile = arguments['--outfile'] if '--outfile' in arguments else f'{user}.pgn'
+    time_class = arguments['--time-class'] if '--time-class' in arguments else None
+    color = arguments['--color'].lower() if arguments.get('--color') else None
+    since = arguments['--since'] if '--since' in arguments else None
+    num_games = int(arguments['--num-games']) if '--num-games' in arguments else None
 
     if since:
         from_year = int(since[:4])
@@ -44,7 +44,7 @@ def main(arguments):
             print('Downloading {url}...'.format(url=url), flush=True)
             games = requests.get(url)
             for game in games.json()['games'][::-1]:
-                if game['rules'] == 'chess' and (not blitz_only or game['time_class'] == 'blitz') and (not color or game[color]['username'].lower()==user.lower()):
+                if game['rules'] == 'chess' and (not time_class or game['time_class'] == time_class) and (not color or game[color]['username'].lower()==user.lower()):
                     pgn = game['pgn'].replace('\\n', '\n')
                     try:
                         f.write(game['pgn'])
