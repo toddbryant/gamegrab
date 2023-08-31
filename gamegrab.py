@@ -21,6 +21,11 @@ import requests
 import json
 import re
 
+CHESSCOM_HEADERS = { \
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36' \
+}
+
+
 def main(arguments):
     user = arguments['USERNAME']
     outfile = arguments['--outfile'] if '--outfile' in arguments else f'{user}.pgn'
@@ -34,7 +39,7 @@ def main(arguments):
         from_month = int(since[4:6])
 
     with open(outfile, 'w') as f:
-        urls = requests.get('https://api.chess.com/pub/player/{0}/games/archives'.format(user))
+        urls = requests.get('https://api.chess.com/pub/player/{0}/games/archives'.format(user), headers=CHESSCOM_HEADERS)
         game_ctr = 0
         for url in urls.json()['archives'][::-1]:
             if since:
@@ -42,7 +47,7 @@ def main(arguments):
                 if url_year < from_year or (url_year == from_year and url_month < from_month):
                     continue
             print('Downloading {url}...'.format(url=url), flush=True)
-            games = requests.get(url)
+            games = requests.get(url, headers=CHESSCOM_HEADERS)
             for game in games.json()['games'][::-1]:
                 if game['rules'] == 'chess' and (not time_class or game['time_class'] == time_class) and (not color or game[color]['username'].lower()==user.lower()):
                     pgn = game['pgn'].replace('\\n', '\n')
