@@ -46,10 +46,10 @@ def main(arguments):
                 url_year, url_month = map(int, url.split('/')[-2:])
                 if url_year < from_year or (url_year == from_year and url_month < from_month):
                     continue
-            print('Downloading {url}...'.format(url=url), flush=True)
+            #print('Downloading {url}...'.format(url=url), flush=True)
             games = requests.get(url, headers=CHESSCOM_HEADERS)
             for game in games.json()['games'][::-1]:
-                if game['rules'] == 'chess' and (not time_class or game['time_class'] == time_class) and (not color or game[color]['username'].lower()==user.lower()):
+                if game['rules'] == 'chess' and game['rated'] and (not time_class or game['time_class'] == time_class) and (not color or game[color]['username'].lower()==user.lower()):
                     pgn = game['pgn'].replace('\\n', '\n')
                     try:
                         f.write(game['pgn'])
